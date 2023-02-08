@@ -3,8 +3,8 @@
 `wav-maker` is, at the moment, a very barebones script for creating a WAV file
 of a simple piece of music, given an input file as an argument. This input file
 is expected to be organized in a bespoke format described below---`wav-maker`
-currently just panics if the input is invalid, though this will soon be replaced
-by proper error handling.
+will return with an error if the file I/O fails, or with the first syntax error
+in the input file, if such errors exist.
 
 The input file format is fairly simple, but rather specific:
 
@@ -43,9 +43,9 @@ The note duration abbreviations are as follows:
 | `DH`         | Dotted half    | 48              |
 | `W`          | Whole          | 64              |
 
-Current intentions are to improve error handling, possibly to loosen the syntax
-for note durations, and to give the user more control over things like the base
-amplitude of note waveforms.
+Current intentions are possibly to loosen the syntax for note durations, and to
+give the user more control over things like the base amplitude of note
+waveforms.
 
 ## Example
 

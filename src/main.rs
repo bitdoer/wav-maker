@@ -61,25 +61,44 @@ struct MusicalPiece {
     bpm: f64,
 }
 
+#[derive(Debug)]
+enum SyntaxErrorType {
+    MissingEntry,
+    BadBPM(String),
+    BadStartTime(String),
+    BadDuration(String),
+    BadPitchClass(String),
+    BadOctave(String),
+    BadAmplitude(String),
+    BadWaveform(String),
+}
+
+#[derive(Debug)]
+enum MusicError {
+    SyntaxError(usize, SyntaxErrorType),
+    FileReadError(String),
+    FileWriteError(String),
+}
+
 // +-------------------+
 // |  Implementations  |
 // +-------------------+
 
 impl NoteDuration {
-    fn from_abbrev(input: &str) -> Self {
+    fn from_abbrev(input: &str) -> Result<Self, SyntaxErrorType> {
         match input {
-            "TS" => Self::ThirtySecond,
-            "DTS" => Self::DottedThirtySecond,
-            "S" => Self::Sixteenth,
-            "DS" => Self::DottedSixteenth,
-            "E" => Self::Eighth,
-            "DE" => Self::DottedEighth,
-            "Q" => Self::Quarter,
-            "DQ" => Self::DottedQuarter,
-            "H" => Self::Half,
-            "DH" => Self::DottedHalf,
-            "W" => Self::Whole,
-            _ => panic!("bad duration abbrev"),
+            "TS" => Ok(Self::ThirtySecond),
+            "DTS" => Ok(Self::DottedThirtySecond),
+            "S" => Ok(Self::Sixteenth),
+            "DS" => Ok(Self::DottedSixteenth),
+            "E" => Ok(Self::Eighth),
+            "DE" => Ok(Self::DottedEighth),
+            "Q" => Ok(Self::Quarter),
+            "DQ" => Ok(Self::DottedQuarter),
+            "H" => Ok(Self::Half),
+            "DH" => Ok(Self::DottedHalf),
+            "W" => Ok(Self::Whole),
+            _ => Err(SyntaxErrorType::BadDuration(input.to_owned())),
         }
     }
 
@@ -101,7 +120,7 @@ impl NoteDuration {
 }
 
 impl Note {
-    fn new(note: &str) -> Self {
+    fn new(note: &str) -> Result<Self, SyntaxErrorType> {
         let pitch_class = match &note[..(note.len() - 1)] {
             "A" => PitchClass::A,
             "A#" | "Bb" => PitchClass::BFlat,
@@ -115,59 +134,97 @@ impl Note {
             "F#" | "Gb" => PitchClass::GFlat,
             "G" => PitchClass::G,
             "G#" | "Ab" => PitchClass::AFlat,
-            _ => panic!("Bad pitch class"),
+            e => return Err(SyntaxErrorType::BadPitchClass(e.to_string())),
         };
-        let octave = note
-            .chars()
-            .last()
-            .expect("Bad octave")
-            .to_digit(10)
-            .expect("Bad octave");
-        Self {
+        let octave = match note.chars().last() {
+            Some(ch) => match ch.to_digit(10) {
+                Some(n) => n,
+                None => return Err(SyntaxErrorType::BadOctave(ch.to_string())),
+            },
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+
+        Ok(Self {
             pitch_class,
             octave,
-        }
+        })
     }
 }
 
 impl WaveType {
-    fn new(input: &str) -> Self {
+    fn new(input: &str) -> Result<Self, SyntaxErrorType> {
         match input {
-            "S" => Self::Sine,
-            "Q" => Self::Square,
-            "T" => Self::Triangle,
-            "A" => Self::Sawtooth,
-            _ => panic!("Bad wave type"),
+            "S" => Ok(Self::Sine),
+            "Q" => Ok(Self::Square),
+            "T" => Ok(Self::Triangle),
+            "A" => Ok(Self::Sawtooth),
+            _ => Err(SyntaxErrorType::BadWaveform(input.to_string())),
         }
     }
 }
 
 impl NoteSignal {
-    fn new(input: &str) -> Self {
+    fn new(input: &str) -> Result<Self, SyntaxErrorType> {
         let parts = input.split_whitespace().collect::<Vec<_>>();
-        Self {
-            start: parts[0].parse().expect("Bad start value"),
-            duration: NoteDuration::from_abbrev(parts[1]),
-            note: Note::new(parts[2]),
-            ampl: parts[3].parse().expect("Bad amplitude"),
-            wavetype: WaveType::new(parts[4]),
-        }
+        let start = match parts.get(0) {
+            Some(s) => match s.parse() {
+                Ok(n) => n,
+                Err(_) => return Err(SyntaxErrorType::BadStartTime(s.to_string())),
+            },
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+        let duration = match parts.get(1) {
+            Some(s) => NoteDuration::from_abbrev(s)?,
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+        let note = match parts.get(2) {
+            Some(s) => Note::new(s)?,
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+        let ampl = match parts.get(3) {
+            Some(s) => match s.parse() {
+                Ok(n) => n,
+                Err(_) => return Err(SyntaxErrorType::BadAmplitude(s.to_string())),
+            },
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+        let wavetype = match parts.get(4) {
+            Some(s) => WaveType::new(s)?,
+            None => return Err(SyntaxErrorType::MissingEntry),
+        };
+        Ok(Self {
+            start,
+            duration,
+            note,
+            ampl,
+            wavetype,
+        })
     }
 }
 
 impl MusicalPiece {
-    fn new(input: &str) -> Self {
+    fn new(input: &str) -> Result<Self, MusicError> {
         let mut signals = vec![];
-        let bpm = input
-            .lines()
-            .next()
-            .expect("Bad BPM")
-            .parse()
-            .expect("Bad BPM");
-        for line in input.lines().skip(1) {
-            signals.push(NoteSignal::new(line));
+        let bpm = match input.lines().next() {
+            Some(bpm) => match bpm.parse() {
+                Ok(n) => n,
+                Err(_) => {
+                    return Err(MusicError::SyntaxError(
+                        1,
+                        SyntaxErrorType::BadBPM(bpm.to_string()),
+                    ))
+                }
+            },
+            None => return Err(MusicError::SyntaxError(1, SyntaxErrorType::MissingEntry)),
+        };
+
+        for (n, line) in input.lines().enumerate().skip(1) {
+            signals.push(match NoteSignal::new(line) {
+                Ok(sig) => sig,
+                Err(e) => return Err(MusicError::SyntaxError(n + 1, e)),
+            });
         }
-        Self { signals, bpm }
+        Ok(Self { signals, bpm })
     }
 
     fn synthesize(&self) -> Vec<u8> {
@@ -218,6 +275,35 @@ impl MusicalPiece {
 
     fn sample_to_sf(&self, sample: u32) -> u32 {
         ((sample as f64 / SAMPLE_RATE as f64) * 16.0 * self.bpm / 60.0).floor() as u32
+    }
+}
+
+impl std::fmt::Display for SyntaxErrorType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MissingEntry => write!(f, "missing entry"),
+            Self::BadBPM(s) => write!(f, "invalid BPM: \"{}\"", s),
+            Self::BadStartTime(s) => write!(f, "invalid start time: \"{}\"", s),
+            Self::BadDuration(s) => write!(f, "invalid duration: \"{}\"", s),
+            Self::BadPitchClass(s) => write!(f, "invalid pitch class: \"{}\"", s),
+            Self::BadOctave(s) => write!(f, "invalid octave: \"{}\"", s),
+            Self::BadAmplitude(s) => write!(f, "invalid amplitude: \"{}\"", s),
+            Self::BadWaveform(s) => write!(f, "invalid waveform abbreviation: \"{}\"", s),
+        }
+    }
+}
+
+impl std::fmt::Display for MusicError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MusicError::SyntaxError(line, e) => write!(f, "Syntax error (line {}): {}", line, e),
+            MusicError::FileReadError(file) => {
+                write!(f, "I/O error: failed to read file \"{}\"", file)
+            }
+            MusicError::FileWriteError(file) => {
+                write!(f, "I/O error: failed to write to file \"{}\"", file)
+            }
+        }
     }
 }
 
@@ -312,24 +398,40 @@ fn header(data_size: u32) -> Vec<u8> {
 // +---------------+
 
 fn main() {
+    match run() {
+        Ok(_) => return,
+        Err(e) => println!("{}", e),
+    }
+}
+
+fn run() -> Result<(), MusicError> {
     let args = std::env::args();
     if args.len() < 2 {
         println!("Usage: wav-maker <input file>");
-        return;
+        return Ok(());
     }
 
-    // generate waveform
+    // get file input
     let filename = args.skip(1).next().expect("must exist by if statement");
-    let input = std::fs::read_to_string(&filename).expect("Failed to read from file");
-    let piece = MusicalPiece::new(&input);
+    let input = match std::fs::read_to_string(&filename) {
+        Ok(s) => s,
+        Err(_) => return Err(MusicError::FileReadError(filename)),
+    };
+
+    // generate output waveform values
+    let piece = MusicalPiece::new(&input)?;
     let data = piece.synthesize();
 
     // prepare output buffer with header
     let mut output = header(data.len() as u32);
 
-    // load data into buffer
+    // load output waveform data into buffer
     output.extend_from_slice(&data);
 
     // write buffer into file
-    std::fs::write(&format!("{}.wav", filename), &output).expect("Failed to write to file");
+    if std::fs::write(&format!("{}.wav", filename), &output).is_err() {
+        return Err(MusicError::FileWriteError(format!("{}.wav", filename)));
+    }
+
+    Ok(())
 }
