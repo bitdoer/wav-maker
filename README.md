@@ -65,7 +65,6 @@ Suppose the file `lick` contains the following contents:
 Then running `wav-maker lick` will create the file `lick.wav`, which will be a
 somewhat stiff rendition of [The Lick](https://www.youtube.com/watch?v=krDxhnaKD7Q)
 in D minor at 120 BPM, using triangle waves.
-*/
 
 ## Why?
 
