@@ -319,8 +319,8 @@ fn main() {
     }
 
     // generate waveform
-    let input =
-        std::fs::read_to_string(args.skip(1).next().unwrap()).expect("Failed to read from file");
+    let filename = args.skip(1).next().expect("must exist by if statement");
+    let input = std::fs::read_to_string(&filename).expect("Failed to read from file");
     let piece = MusicalPiece::new(&input);
     let data = piece.synthesize();
 
@@ -331,5 +331,5 @@ fn main() {
     output.extend_from_slice(&data);
 
     // write buffer into file
-    std::fs::write("test.wav", &output).expect("Failed to write to file");
+    std::fs::write(&format!("{}.wav", filename), &output).expect("Failed to write to file");
 }
