@@ -14,7 +14,8 @@ note is assumed to fill 1 beat.
 - All subsequent lines correspond to a note being played for a duration, and are
 divided into five columns separated by whitespace:
     - The time at which this note is played, expressed as the number of
-    16ths-of-a-beat (64th-note beats) since the beginning of the audio;
+    16ths-of-a-beat (64th-note beats; called "ticks" in the code) since the
+    beginning of the audio;
     - The duration of the signal, expressed by an abbreviation for the type of
     note (e.g. `Q` for "quarter"---complete list below);
     - The note name in scientific pitch notation (e.g. `A4` or `C#5`), with
@@ -45,7 +46,9 @@ The note duration abbreviations are as follows:
 
 Current intentions are possibly to loosen the syntax for note durations, and to
 give the user more control over things like the base amplitude of note
-waveforms.
+waveforms. Ideally, I'd like to move to having an *optional* header line of
+parameters like BPM, with sensible defaults and with the ability to override
+these parameters using command-line flags.
 
 ## Example
 

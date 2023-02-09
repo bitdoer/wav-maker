@@ -1,6 +1,6 @@
 //! This module defines an enum for note duration, which has a method to parse
 //! the input and another method to spit out how many 16ths-of-a-beat (64th
-//! note beats, "sf" for sixty-four) each variant represents.
+//! note beats, "ticks") each variant represents.
 
 use crate::error::SyntaxErrorType;
 
