@@ -20,7 +20,7 @@ pub enum PitchClass {
     AFlat,
 }
 
-// A note is, very simply, just a pitch class (like A, or F#), plus an octave
+// A note is represented as just a pitch class (like A, or F#), plus an octave
 // number. For example, A4 is 440 Hz and A3 is 220 Hz. C4 is "middle C", and is
 // the note right after B3.
 #[derive(Clone, Copy)]

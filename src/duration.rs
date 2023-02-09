@@ -37,7 +37,7 @@ impl NoteDuration {
         }
     }
 
-    pub fn as_sf(&self) -> u32 {
+    pub fn as_ticks(&self) -> u32 {
         match self {
             Self::ThirtySecond => 2,
             Self::DottedThirtySecond => 3,

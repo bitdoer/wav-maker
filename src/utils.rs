@@ -44,6 +44,19 @@ pub fn sawtooth_wave(n: u32, ampl: f64, freq: f64) -> f64 {
 }
 
 pub fn header(data_size: u32) -> Vec<u8> {
+    // header layout:
+    // - "RIFF"
+    // - 4-byte size of the entire file below this point
+    // - "WAVE"
+    // - "fmt "
+    // - 4-byte size of the rest "fmt " chunk
+    // - 2-byte format tag
+    // - 2-byte number of channels
+    // - 4-byte sample rate
+    // - 4-byte bytes per second (derived from other header info)
+    // - 2-byte block alignment
+    // - 2-byte bit count per sample
+    // - "data"
     let mut output = RIFF.to_vec();
     let block_align = CHANNELS * BITS_PER_SAMPLE / 8;
     let bytes_per_sec = SAMPLE_RATE * (block_align as u32);

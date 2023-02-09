@@ -1,3 +1,6 @@
+//! This module defines NoteSignal, a struct corresponding to a single row in
+//! an input file---effectively, a single note on a music score.
+
 use crate::duration::NoteDuration;
 use crate::error::SyntaxErrorType;
 use crate::note::Note;
@@ -10,6 +13,7 @@ pub enum WaveType {
     Sawtooth,
 }
 
+// a "note signal" is a pitch, a start, a duration, an amplitude, and a waveform
 #[derive(Clone, Copy)]
 pub struct NoteSignal {
     pub start: u32,
