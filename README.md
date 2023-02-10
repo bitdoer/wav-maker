@@ -17,7 +17,8 @@ divided into five columns separated by whitespace:
     16ths-of-a-beat (64th-note beats; called "ticks" in the code) since the
     beginning of the audio;
     - The duration of the signal, expressed by an abbreviation for the type of
-    note (e.g. `Q` for "quarter"---complete list below);
+    note (e.g. `Q` for "quarter"---complete list below), or simply as the number
+    of ticks;
     - The note name in scientific pitch notation (e.g. `A4` or `C#5`), with
     limitations: both `D#4` and `Eb4` are valid and enharmonic, for example,
     but at the moment, `Cb3` or `F##2` would be an error;
@@ -30,25 +31,29 @@ divided into five columns separated by whitespace:
 
 The note duration abbreviations are as follows:
 
-| Abbreviation | Name           | 16ths-of-a-beat |
-|--------------|----------------|-----------------|
-| `TS`         | 32nd           | 2               |
-| `DTS`        | Dotted 32nd    | 3               |
-| `S`          | 16th           | 4               |
-| `DS`         | Dotted 16th    | 6               |
-| `E`          | 8th            | 8               |
-| `DE`         | Dotted 8th     | 12              |
-| `Q`          | Quarter        | 16              |
-| `DQ`         | Dotted quarter | 24              |
-| `H`          | Half           | 32              |
-| `DH`         | Dotted half    | 48              |
-| `W`          | Whole          | 64              |
+| Abbreviation | Name           | Ticks (16ths-of-a-beat) |
+|--------------|----------------|-------------------------|
+| `TS`         | 32nd           | 2                       |
+| `DTS`        | Dotted 32nd    | 3                       |
+| `S`          | 16th           | 4                       |
+| `DS`         | Dotted 16th    | 6                       |
+| `E`          | 8th            | 8                       |
+| `DE`         | Dotted 8th     | 12                      |
+| `Q`          | Quarter        | 16                      |
+| `DQ`         | Dotted quarter | 24                      |
+| `H`          | Half           | 32                      |
+| `DH`         | Dotted half    | 48                      |
+| `W`          | Whole          | 64                      |
 
-Current intentions are possibly to loosen the syntax for note durations, and to
-give the user more control over things like the base amplitude of note
-waveforms. Ideally, I'd like to move to having an *optional* header line of
-parameters like BPM, with sensible defaults and with the ability to override
-these parameters using command-line flags.
+My current intention are to give the user more control over things like the base
+amplitude of note waveforms. Ideally, I'd like to move to having an *optional*
+header line of parameters like BPM, with sensible defaults and with the ability
+to override these parameters using command-line flags.
+
+A medium-term improvement I'd like to make is to add some kind of looping
+construct for sequences of notes to the language. That will require significant
+reworking of the parsing, as the present implementation is very naive, but will
+have a massive benefit in terms of expressiveness.
 
 ## Example
 
