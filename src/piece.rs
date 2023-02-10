@@ -44,7 +44,7 @@ impl MusicalPiece {
             // on that time
             for &signal in running_signals.iter() {
                 // if a signal has started and it hasn't ended,
-                if signal.start + signal.duration.as_ticks() >= self.sample_to_tick(sample)
+                if signal.start + signal.duration.ticks >= self.sample_to_tick(sample)
                     && signal.start <= self.sample_to_tick(sample)
                 {
                     // add that signal to the running total
@@ -79,7 +79,7 @@ impl MusicalPiece {
             running_signals = running_signals
                 .into_iter()
                 .filter(|&signal| {
-                    signal.start + signal.duration.as_ticks() >= self.sample_to_tick(sample)
+                    signal.start + signal.duration.ticks >= self.sample_to_tick(sample)
                 })
                 .collect();
 

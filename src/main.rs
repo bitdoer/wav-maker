@@ -1,4 +1,3 @@
-mod duration;
 mod error;
 mod note;
 mod piece;
