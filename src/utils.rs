@@ -16,29 +16,28 @@ pub const SAMPLE_RATE: u32 = 44100;
 pub const BITS_PER_SAMPLE: u16 = 16;
 
 // signal parameters and mathematical constants
-pub const BASE_AMPLITUDE: f64 = 2048.0;
+pub const DEFAULT_BPM: f64 = 100.0;
+pub const DEFAULT_AMPL: u16 = 2048;
 pub const PI: f64 = 3.141592653589793;
 
 pub fn sine_wave(n: u32, ampl: f64, freq: f64) -> f64 {
-    ampl * BASE_AMPLITUDE * f64::sin(2.0 * PI * freq * n as f64 / SAMPLE_RATE as f64)
+    ampl * f64::sin(2.0 * PI * freq * n as f64 / SAMPLE_RATE as f64)
 }
 
 pub fn square_wave(n: u32, ampl: f64, freq: f64) -> f64 {
-    ampl * BASE_AMPLITUDE * f64::signum(f64::sin(2.0 * PI * freq * n as f64 / SAMPLE_RATE as f64))
+    ampl * f64::signum(f64::sin(2.0 * PI * freq * n as f64 / SAMPLE_RATE as f64))
 }
 
 pub fn triangle_wave(n: u32, ampl: f64, freq: f64) -> f64 {
-    ampl * BASE_AMPLITUDE
-        * (4.0
-            * ((n as f64 * freq) / SAMPLE_RATE as f64
-                - (0.5 + (n as f64 * freq) / SAMPLE_RATE as f64).floor())
-            .abs()
-            - 1.0)
+    ampl * (4.0
+        * ((n as f64 * freq) / SAMPLE_RATE as f64
+            - (0.5 + (n as f64 * freq) / SAMPLE_RATE as f64).floor())
+        .abs()
+        - 1.0)
 }
 
 pub fn sawtooth_wave(n: u32, ampl: f64, freq: f64) -> f64 {
     2.0 * ampl
-        * BASE_AMPLITUDE
         * ((n as f64 * freq) / SAMPLE_RATE as f64
             - (0.5 + (n as f64 * freq) / SAMPLE_RATE as f64).floor())
 }

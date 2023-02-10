@@ -45,7 +45,7 @@ The note duration abbreviations are as follows:
 | `DH`         | Dotted half    | 48                      |
 | `W`          | Whole          | 64                      |
 
-My current intention are to give the user more control over things like the base
+My current intention is to give the user more control over things like the base
 amplitude of note waveforms. Ideally, I'd like to move to having an *optional*
 header line of parameters like BPM, with sensible defaults and with the ability
 to override these parameters using command-line flags.

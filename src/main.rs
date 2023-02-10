@@ -8,6 +8,17 @@ use crate::error::MusicError;
 use crate::piece::MusicalPiece;
 use crate::utils::header;
 
+use clap::Parser;
+
+#[derive(Parser)]
+struct Args {
+    file: String,
+    #[arg(short, long)]
+    bpm: Option<f64>,
+    #[arg(short, long)]
+    ampl: Option<u16>,
+}
+
 fn main() {
     match run() {
         Ok(_) => return,
@@ -16,21 +27,15 @@ fn main() {
 }
 
 fn run() -> Result<(), MusicError> {
-    let args = std::env::args();
-    if args.len() < 2 {
-        println!("Usage: wav-maker <input file>");
-        return Ok(());
-    }
+    let args = Args::parse();
 
-    // get file input
-    let filename = args.skip(1).next().expect("must exist by if statement");
-    let input = match std::fs::read_to_string(&filename) {
+    let input = match std::fs::read_to_string(&args.file) {
         Ok(s) => s,
-        Err(_) => return Err(MusicError::FileReadError(filename)),
+        Err(_) => return Err(MusicError::FileReadError(args.file)),
     };
 
     // generate output waveform values
-    let piece = MusicalPiece::new(&input)?;
+    let piece = MusicalPiece::new(&input, args.bpm, args.ampl)?;
     let data = piece.synthesize();
 
     // prepare output buffer with header
@@ -40,8 +45,8 @@ fn run() -> Result<(), MusicError> {
     output.extend_from_slice(&data);
 
     // write buffer into file
-    if std::fs::write(&format!("{}.wav", filename), &output).is_err() {
-        return Err(MusicError::FileWriteError(format!("{}.wav", filename)));
+    if std::fs::write(&format!("{}.wav", args.file), &output).is_err() {
+        return Err(MusicError::FileWriteError(format!("{}.wav", args.file)));
     }
 
     Ok(())

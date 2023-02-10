@@ -1,3 +1,8 @@
+//! This module defines the type MusicalPiece, which is taken to be a sequence
+//! of notes, together with a tempo and an amplitude. It gives it a method to
+//! read a file input, and another to spit out the PCM output that the piece
+//! represents.
+
 use crate::error::{MusicError, SyntaxErrorType};
 use crate::signal::{NoteSignal, WaveType};
 use crate::utils::*;
@@ -6,31 +11,58 @@ use crate::utils::*;
 pub struct MusicalPiece {
     signals: Vec<NoteSignal>,
     bpm: f64,
+    ampl: u16,
 }
 
 impl MusicalPiece {
-    pub fn new(input: &str) -> Result<Self, MusicError> {
+    pub fn new(
+        input: &str,
+        mut bpm: Option<f64>,
+        mut ampl: Option<u16>,
+    ) -> Result<Self, MusicError> {
         let mut signals = vec![];
-        let bpm = match input.lines().next() {
-            Some(bpm) => match bpm.parse() {
-                Ok(n) => n,
-                Err(_) => {
-                    return Err(MusicError::SyntaxError(
-                        1,
-                        SyntaxErrorType::BadBPM(bpm.to_string()),
-                    ))
-                }
-            },
-            None => return Err(MusicError::SyntaxError(1, SyntaxErrorType::MissingEntry)),
-        };
 
-        for (n, line) in input.lines().enumerate().skip(1) {
-            signals.push(match NoteSignal::new(line) {
-                Ok(sig) => sig,
-                Err(e) => return Err(MusicError::SyntaxError(n + 1, e)),
-            });
+        for (n, line) in input.lines().enumerate() {
+            if line.starts_with("BPM ") {
+                if bpm.is_none() {
+                    bpm = Some(
+                        match line.split_whitespace().nth(1).unwrap_or_default().parse() {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(MusicError::SyntaxError(
+                                    n + 1,
+                                    SyntaxErrorType::BadBPM(line[4..].to_string()),
+                                ))
+                            }
+                        },
+                    );
+                }
+            } else if line.starts_with("AMPL ") || line.starts_with("AMPLITUDE ") {
+                if ampl.is_none() {
+                    ampl = Some(
+                        match line.split_whitespace().nth(1).unwrap_or_default().parse() {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(MusicError::SyntaxError(
+                                    n + 1,
+                                    SyntaxErrorType::BadAmplitude(line[4..].to_string()),
+                                ))
+                            }
+                        },
+                    );
+                }
+            } else {
+                signals.push(match NoteSignal::new(line) {
+                    Ok(sig) => sig,
+                    Err(e) => return Err(MusicError::SyntaxError(n + 1, e)),
+                });
+            }
         }
-        Ok(Self { signals, bpm })
+        Ok(Self {
+            signals,
+            bpm: bpm.unwrap_or(DEFAULT_BPM),
+            ampl: ampl.unwrap_or(DEFAULT_AMPL),
+        })
     }
 
     // given a musical piece, produce a vector of bytes representing the 16-bit
@@ -49,18 +81,26 @@ impl MusicalPiece {
                 {
                     // add that signal to the running total
                     acc += match signal.wavetype {
-                        WaveType::Sine => {
-                            sine_wave(sample, signal.ampl, signal.note.equal_tempered())
-                        }
-                        WaveType::Square => {
-                            square_wave(sample, signal.ampl, signal.note.equal_tempered())
-                        }
-                        WaveType::Triangle => {
-                            triangle_wave(sample, signal.ampl, signal.note.equal_tempered())
-                        }
-                        WaveType::Sawtooth => {
-                            sawtooth_wave(sample, signal.ampl, signal.note.equal_tempered())
-                        }
+                        WaveType::Sine => sine_wave(
+                            sample,
+                            signal.ampl * self.ampl as f64,
+                            signal.note.equal_tempered(),
+                        ),
+                        WaveType::Square => square_wave(
+                            sample,
+                            signal.ampl * self.ampl as f64,
+                            signal.note.equal_tempered(),
+                        ),
+                        WaveType::Triangle => triangle_wave(
+                            sample,
+                            signal.ampl * self.ampl as f64,
+                            signal.note.equal_tempered(),
+                        ),
+                        WaveType::Sawtooth => sawtooth_wave(
+                            sample,
+                            signal.ampl * self.ampl as f64,
+                            signal.note.equal_tempered(),
+                        ),
                     };
                 }
             }
