@@ -60,7 +60,8 @@ have a massive benefit in terms of expressiveness.
 Suppose the file `lick` contains the following contents:
 
 ```
-120
+BPM 120
+AMPL 2048
 0  S D4  1.02 T
 4  S E4  1.0  T
 8  S F4  1.02 T
